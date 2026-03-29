@@ -1,39 +1,39 @@
 """
-Custom exceptions for linksync SDK
+Custom exceptions for linksnip SDK
 """
 
 
-class LinksyncError(Exception):
-    """Base exception for all linksync errors"""
+class LinksnipError(Exception):
+    """Base exception for all linksnip errors"""
     pass
 
 
-class AuthenticationError(LinksyncError):
+class AuthenticationError(LinksnipError):
     """Raised when API key is invalid or missing"""
     pass
 
 
-class InvalidURLError(LinksyncError):
+class InvalidURLError(LinksnipError):
     """Raised when provided URL is invalid"""
     pass
 
 
-class LinkNotFoundError(LinksyncError):
+class LinkNotFoundError(LinksnipError):
     """Raised when link ID does not exist"""
     pass
 
 
-class LinkExistsError(LinksyncError):
+class LinkExistsError(LinksnipError):
     """Raised when trying to create a link that already exists"""
     pass
 
 
-class ValidationError(LinksyncError):
+class ValidationError(LinksnipError):
     """Raised when input validation fails"""
     pass
 
 
-class APIError(LinksyncError):
+class APIError(LinksnipError):
     """Raised when API returns an error"""
     
     def __init__(self, message, status_code=None, error_code=None):
@@ -42,6 +42,6 @@ class APIError(LinksyncError):
         self.error_code = error_code
 
 
-class ConnectionError(LinksyncError):
+class ConnectionError(LinksnipError):
     """Raised when unable to connect to API"""
     pass

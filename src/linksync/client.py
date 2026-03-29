@@ -1,5 +1,5 @@
 """
-linksync - Generic URL shortening client
+linksnip - Generic URL shortening client
 """
 
 import requests
