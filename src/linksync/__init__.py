@@ -24,7 +24,7 @@ from .exceptions import (
 
 __all__ = [
     "Client",
-    "LinksyncError",
+    "LinksnipError",
     "AuthenticationError",
     "InvalidURLError",
     "LinkNotFoundError",
