@@ -3,7 +3,12 @@
 A generic URL shortening client that works with any compatible backend API.
 """
 
-__version__ = "0.2.1"
+# Read version from package metadata (single source of truth in pyproject.toml)
+try:
+    from importlib.metadata import version
+    __version__ = version("linksync")
+except Exception:
+    __version__ = "unknown"
 
 from .client import Client
 from .exceptions import (
