@@ -192,6 +192,49 @@ class Client:
         else:
             return response.get('short_url', '')
     
+    def list(
+        self,
+        limit: int = 100,
+        cursor: Optional[str] = None
+    ) -> Dict[str, any]:
+        """
+        List all links for the authenticated project
+        
+        Args:
+            limit: Maximum number of links to return (1-1000, default: 100)
+            cursor: Pagination cursor from previous response (optional)
+        
+        Returns:
+            Dict with:
+                - links: List of link objects
+                - count: Number of links returned
+                - list_complete: Whether all links have been returned
+                - cursor: Cursor for next page (if list_complete is False)
+        
+        Raises:
+            AuthenticationError: Invalid API key
+            APIError: Other API errors
+        
+        Examples:
+            >>> result = client.list()
+            >>> for link in result['links']:
+            ...     print(f"{link['id']}: {link['url']}")
+            
+            >>> # Pagination
+            >>> result = client.list(limit=50)
+            >>> if not result['list_complete']:
+            ...     next_result = client.list(cursor=result['cursor'])
+        """
+        params = {'limit': limit}
+        if cursor:
+            params['cursor'] = cursor
+        
+        from urllib.parse import urlencode
+        query_string = urlencode(params)
+        
+        response = self._request('GET', f'/api/links?{query_string}')
+        return response
+    
     def delete(self, link_id: str) -> Dict[str, any]:
         """
         Delete a short link
