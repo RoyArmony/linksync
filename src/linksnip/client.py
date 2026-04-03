@@ -113,7 +113,7 @@ class Client:
     
     def shorten(
         self,
-        url: str,
+        dest_long_url: str,
         brand: str,
         post_id: Optional[str] = None,
         platforms: Optional[List[str]] = None
@@ -122,14 +122,15 @@ class Client:
         Create a short link
         
         Args:
-            url: The long URL to shorten
+            dest_long_url: The long URL to shorten
             brand: Brand name (e.g., 'isrotel', 'hilton')
             post_id: Custom post ID (optional, auto-generated if omitted)
             platforms: List of platform codes for attribution (e.g., ["fb", "ig", "tg"])
         
         Returns:
             If platforms is None: Short URL string
-            If platforms provided: Dict with "base" and platform-specific URLs
+            If platforms provided: Dict keyed by platform code with "base" and one entry
+                per platform, in the same order as the input list.
         
         Raises:
             InvalidURLError: URL is invalid
@@ -140,25 +141,25 @@ class Client:
         
         Examples:
             Basic shortening:
-            >>> url = client.shorten(
-            ...     url="https://example.com",
+            >>> short_url = client.shorten(
+            ...     dest_long_url="https://example.com",
             ...     brand="mybrand"
             ... )
-            >>> print(url)
+            >>> print(short_url)
             https://yourdomain.com/myproject/mybrand/abc123
             
             With custom post ID:
-            >>> url = client.shorten(
-            ...     url="https://example.com",
+            >>> short_url = client.shorten(
+            ...     dest_long_url="https://example.com",
             ...     brand="mybrand",
             ...     post_id="p381"
             ... )
-            >>> print(url)
+            >>> print(short_url)
             https://yourdomain.com/myproject/mybrand/p381
             
             With platform tracking:
             >>> urls = client.shorten(
-            ...     url="https://example.com",
+            ...     dest_long_url="https://example.com",
             ...     brand="mybrand",
             ...     platforms=["fb", "ig", "tg"]
             ... )
@@ -171,7 +172,7 @@ class Client:
         """
         # Build request payload
         payload = {
-            "url": url,
+            "url": dest_long_url,
             "brand": brand
         }
         
