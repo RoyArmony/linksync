@@ -26,13 +26,14 @@ class Client:
     
     Examples:
         >>> client = Client(base_url="https://yourdomain.com", api_key="lsnp_myproject_abc123...")
-        >>> url = client.shorten(url="https://example.com/long-url", brand="mybrand")
-        >>> print(url)
+        >>> short_url = client.shorten(dest_long_url="https://example.com/long-url", brand="mybrand")
+        >>> print(short_url)
         https://yourdomain.com/myproject/mybrand/abc123
     
     Note:
         The project name is automatically extracted from your API key.
-        All short links follow the format: {project}/{brand}/{post_id}
+        With brand:    {project}/{brand}/{post_id}
+        Without brand: {project}/{post_id}
     """
     
     def __init__(self, base_url: str, api_key: str, timeout: int = 30):
@@ -114,67 +115,37 @@ class Client:
     def shorten(
         self,
         dest_long_url: str,
-        brand: str,
+        brand: Optional[str] = None,
         post_id: Optional[str] = None,
         platforms: Optional[List[str]] = None
     ) -> Union[str, Dict[str, str]]:
         """
-        Create a short link
-        
+        Create a short link. See README for full usage and examples.
+
         Args:
             dest_long_url: The long URL to shorten
-            brand: Brand name (e.g., 'isrotel', 'hilton')
-            post_id: Custom post ID (optional, auto-generated if omitted)
-            platforms: List of platform codes for attribution (e.g., ["fb", "ig", "tg"])
-        
+            brand: Brand name (e.g., 'mybrand'). Optional — omit for brand-less links.
+            post_id: Custom post ID. Auto-generated (6-char base62) if omitted.
+            platforms: List of platform codes (e.g., ["fb", "ig", "tg"])
+
         Returns:
-            If platforms is None: Short URL string
-            If platforms provided: Dict keyed by platform code with "base" and one entry
-                per platform, in the same order as the input list.
-        
+            str  — short URL (when platforms is None)
+            dict — {platform: url, ...} including "base" (when platforms is provided)
+
         Raises:
             InvalidURLError: URL is invalid
             ValidationError: Invalid parameters
             AuthenticationError: Invalid API key
             LinkExistsError: Link already exists
             APIError: Other API errors
-        
-        Examples:
-            Basic shortening:
-            >>> short_url = client.shorten(
-            ...     dest_long_url="https://example.com",
-            ...     brand="mybrand"
-            ... )
-            >>> print(short_url)
-            https://yourdomain.com/myproject/mybrand/abc123
-            
-            With custom post ID:
-            >>> short_url = client.shorten(
-            ...     dest_long_url="https://example.com",
-            ...     brand="mybrand",
-            ...     post_id="p381"
-            ... )
-            >>> print(short_url)
-            https://yourdomain.com/myproject/mybrand/p381
-            
-            With platform tracking:
-            >>> urls = client.shorten(
-            ...     dest_long_url="https://example.com",
-            ...     brand="mybrand",
-            ...     platforms=["fb", "ig", "tg"]
-            ... )
-            >>> print(urls["fb"])
-            https://yourdomain.com/myproject/mybrand/abc123-fb
-        
-        Note:
-            The project name is automatically determined from your API key.
-            Links are created as: {project}/{brand}/{post_id}
         """
         # Build request payload
         payload = {
             "url": dest_long_url,
-            "brand": brand
         }
+        
+        if brand:
+            payload["brand"] = brand
         
         if post_id:
             payload["post_id"] = post_id
