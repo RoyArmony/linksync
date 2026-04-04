@@ -218,6 +218,27 @@ class Client:
         
         response = self._request('DELETE', f'/api/links/{encoded_id}')
         return response
+
+    def get_link(self, link_id: str) -> Dict[str, any]:
+        """
+        Get full details for a single link by its ID.
+
+        Args:
+            link_id: The full link ID, e.g. "myproject:mybrand:p381" or "myproject:p381"
+
+        Returns:
+            Dict with all link fields (same shape as a single entry from list())
+
+        Raises:
+            LinkNotFoundError: Link does not exist
+            AuthenticationError: Invalid API key
+            APIError: Other API errors
+        """
+        from urllib.parse import quote
+        encoded_id = quote(link_id, safe='')
+
+        response = self._request('GET', f'/api/links/{encoded_id}')
+        return response
     
     def __enter__(self):
         """Context manager entry"""

@@ -205,12 +205,65 @@ while not result["list_complete"]:
 print(f"Total: {len(all_links)}")
 ```
 
-### `client.delete(link_id)`
+### `client.get_link(link_id)`
 
-Delete a link by its hierarchical ID (`project:brand:post_id`).
+Get full details for a single link by its ID. Returns the same fields as a single entry from `list()`.
 
 ```python
-client.delete("myproject:mybrand:p381")
+info = client.get_link("myproject:mybrand:p381")
+```
+
+**Example response:**
+
+```python
+{
+    "id":                "myproject:mybrand:p381",
+    "project":           "myproject",
+    "brand":             "mybrand",
+    "post_id":           "p381",
+    "url":               "https://example.com/some-long-url",
+    "clicks":            28,
+    "created_at":        "2026-04-01T10:00:00.000Z",
+    "last_click":        "2026-04-04T18:05:10.888Z",
+    "clicks_per_suffix": {"base": 15, "fb": 8, "tg": 5},
+}
+```
+
+(`last_click` and `clicks_per_suffix` only appear after the first click.)
+
+---
+
+### `client.delete(link_id)`
+
+Delete a link by its full ID.
+
+**Returns:**
+
+```python
+{"success": True, "message": "Link deleted successfully", "id": "myproject:mybrand:p381"}
+```
+
+**Example:**
+
+```python
+result = client.delete("myproject:mybrand:p381")
+print(result["message"])  # Link deleted successfully
+```
+
+**Delete all links in your project:**
+
+```python
+result = client.list(limit=1000)
+all_links = result["links"]
+
+while not result["list_complete"]:
+    result = client.list(limit=1000, cursor=result["cursor"])
+    all_links.extend(result["links"])
+
+for link in all_links:
+    client.delete(link["id"])
+
+print(f"Deleted {len(all_links)} links")
 ```
 
 ---
