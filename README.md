@@ -49,22 +49,13 @@ client.shorten(
 )
 ```
 
-**Naming rules:**
+**Parameters:**
 
-| Parameter | Allowed characters | Notes |
-|-----------|-------------------|-------|
-| `brand` | `a–z`, `A–Z`, `0–9`, `-` (dash) | e.g. `"my-brand"` |
-| `post_id` | `a–z`, `A–Z`, `0–9` only | No dashes. `"base"` is reserved and not allowed. |
-
-In Python, **required** parameters have no default value — passing them by name is optional
-but recommended for clarity. **Optional** parameters always have a default (here `=None`).
-
-**URL structure depending on `brand`:**
-
-| `brand` provided | Short URL format |
-|-----------------|------------------|
-| Yes | `https://domain.com/{project}/{brand}/{post_id}` |
-| No  | `https://domain.com/{project}/{post_id}` |
+| Parameter | Required | Allowed characters | Result URL format | Notes |
+|-----------|----------|--------------------|-------------------|-------|
+| `dest_long_url` | ✅ | Any valid `http`/`https` URL | — | No private IPs or localhost |
+| `brand` | ❌ | `a–z`, `A–Z`, `0–9`, `-` | `/{project}/{brand}/{post_id}` | Omit for brand-less links |
+| `post_id` | ❌ | `a–z`, `A–Z`, `0–9` | `/{project}/{post_id}` or `/{project}/{brand}/{post_id}` | No dashes. `"base"` is reserved. Auto-generated (6 chars) if omitted. |
 
 The `{project}` is always extracted automatically from your API key.
 
