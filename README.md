@@ -30,7 +30,7 @@ print(short_url)
 
 - **Project-based isolation**: Each API key is scoped to a specific project
 - **Hierarchical URLs**: All links follow `{project}/{brand}/{post_id}` format
-- **Platform tracking**: Create platform-specific variations (Facebook, Instagram, etc.)
+- **Channel suffix tracking**: Append any `-suffix` to a link URL for per-channel analytics (e.g. `-fb`, `-tg`, `-newsletter`). No registration needed.
 - **Auto-generated IDs**: Post IDs are generated automatically if not provided
 - **Type hints**: Full typing support for better IDE experience
 
@@ -42,8 +42,8 @@ print(short_url)
 client.shorten(
     dest_long_url,        # Required: The long URL to shorten
     brand=None,           # Optional: Brand name (e.g., "mybrand"). Omit for brand-less links.
-    post_id=None,         # Optional: Custom post ID. If omitted, auto-generated as a 6-char random ID (e.g. "Xy3KpL")
-    platforms=None,       # Optional: List of platform codes, e.g. ["fb", "ig", "tg"]
+    post_id=None,         # Optional: Custom post ID. If omitted, auto-generated as a 6-char random ID (e.g. "Xy3KpL").
+                          #           Must be alphanumeric only — no dashes.
 )
 ```
 
@@ -53,25 +53,27 @@ but recommended for clarity. **Optional** parameters always have a default (here
 **URL structure depending on `brand`:**
 
 | `brand` provided | Short URL format |
-|-----------------|-----------------|
+|-----------------|------------------|
 | Yes | `https://domain.com/{project}/{brand}/{post_id}` |
 | No  | `https://domain.com/{project}/{post_id}` |
 
 The `{project}` is always extracted automatically from your API key.
 
-**Returns:**
-- `str` — the short URL, when `platforms` is not provided
-- `dict` — when `platforms` is provided: a dict keyed by platform code, in the same order
-  as the input list, plus a `"base"` entry. Example for `platforms=["fb", "ig", "tg"]`:
-  ```python
-  {
-      "base": "https://domain.com/myproject/mybrand/Xy3KpL",
-      "fb":   "https://domain.com/myproject/mybrand/Xy3KpL-fb",
-      "ig":   "https://domain.com/myproject/mybrand/Xy3KpL-ig",
-      "tg":   "https://domain.com/myproject/mybrand/Xy3KpL-tg",
-  }
-  ```
-  Each platform URL is the base URL with `-{platform_code}` appended to the post ID.
+**Returns:** `str` — the short URL.
+
+**Channel suffix tracking:**  
+You can append any `-suffix` to any short URL at any time — no declaration needed.
+The worker strips the suffix, redirects to the correct destination, and records per-suffix
+counts in the `clicks_per_suffix` field of that link.
+
+```
+https://domain.com/myproject/mybrand/Xy3KpL        → direct click
+https://domain.com/myproject/mybrand/Xy3KpL-fb     → Facebook
+https://domain.com/myproject/mybrand/Xy3KpL-tg     → Telegram
+https://domain.com/myproject/mybrand/Xy3KpL-newsletter → email newsletter
+```
+
+Suffix rules: 2–10 alphanumeric characters, no dashes.
 
 **How post IDs are auto-generated:**
 When `post_id` is not provided, a 6-character random base62 string is generated
@@ -113,33 +115,6 @@ print(short_url)
 # https://domain.com/myproject/mybrand/p381
 ```
 
-### Example 4 — Platform tracking
-
-```python
-urls = client.shorten(
-    dest_long_url="https://example.com/long-url",
-    brand="mybrand",
-    platforms=["fb", "ig", "tg"]
-)
-
-# urls is a dict in the same order as the input list, plus "base":
-print(urls["base"])  # https://domain.com/myproject/mybrand/Xy3KpL
-print(urls["fb"])    # https://domain.com/myproject/mybrand/Xy3KpL-fb
-print(urls["ig"])    # https://domain.com/myproject/mybrand/Xy3KpL-ig
-print(urls["tg"])    # https://domain.com/myproject/mybrand/Xy3KpL-tg
-```
-
-### Example 5 — Custom ID + Platforms
-
-```python
-urls = client.shorten(
-    dest_long_url="https://example.com/long-url",
-    brand="mybrand",
-    post_id="p381",
-    platforms=["fb", "ig"]
-)
-```
-
 ---
 
 ## Other Methods
@@ -156,8 +131,7 @@ for link in result["links"]:
 
 ### `client.delete(link_id)`
 
-Delete a link by its hierarchical ID (`project:brand:post_id`). Also automatically
-deletes all platform variants.
+Delete a link by its hierarchical ID (`project:brand:post_id`).
 
 ```python
 client.delete("myproject:mybrand:p381")

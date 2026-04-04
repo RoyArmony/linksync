@@ -3,7 +3,7 @@ linksnip - Generic URL shortening client
 """
 
 import requests
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional
 from .exceptions import (
     AuthenticationError,
     InvalidURLError,
@@ -117,8 +117,7 @@ class Client:
         dest_long_url: str,
         brand: Optional[str] = None,
         post_id: Optional[str] = None,
-        platforms: Optional[List[str]] = None
-    ) -> Union[str, Dict[str, str]]:
+    ) -> str:
         """
         Create a short link. See README for full usage and examples.
 
@@ -126,11 +125,10 @@ class Client:
             dest_long_url: The long URL to shorten
             brand: Brand name (e.g., 'mybrand'). Optional — omit for brand-less links.
             post_id: Custom post ID. Auto-generated (6-char base62) if omitted.
-            platforms: List of platform codes (e.g., ["fb", "ig", "tg"])
+                     Must be alphanumeric only — no dashes.
 
         Returns:
-            str  — short URL (when platforms is None)
-            dict — {platform: url, ...} including "base" (when platforms is provided)
+            str — the short URL
 
         Raises:
             InvalidURLError: URL is invalid
@@ -139,30 +137,16 @@ class Client:
             LinkExistsError: Link already exists
             APIError: Other API errors
         """
-        # Build request payload
-        payload = {
-            "url": dest_long_url,
-        }
-        
+        payload = {"url": dest_long_url}
+
         if brand:
             payload["brand"] = brand
-        
+
         if post_id:
             payload["post_id"] = post_id
-        
-        if platforms:
-            if not isinstance(platforms, list):
-                raise ValidationError("platforms must be a list")
-            payload["platforms"] = platforms
-        
-        # Make API request
+
         response = self._request('POST', '/api/shorten', json=payload)
-        
-        # Return appropriate format
-        if platforms:
-            return response.get('platforms', {})
-        else:
-            return response.get('short_url', '')
+        return response.get('short_url', '')
     
     def list(
         self,
