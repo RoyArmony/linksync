@@ -20,10 +20,11 @@ client = Client(
 
 short_url = client.shorten(
     dest_long_url="https://example.com/long-product-url",
-    brand="mybrand"
+    brand="mybrand",   # optional
+    post_id="p001",   # optional — auto-generated if omitted
 )
 print(short_url)
-# https://yourdomain.com/myproject/mybrand/Xy3KpL
+# https://yourdomain.com/myproject/mybrand/p001
 ```
 
 ## Features
@@ -38,14 +39,22 @@ print(short_url)
 
 ### `client.shorten()`
 
+Shortens a long URL and returns the new short URL as a string.
+
 ```python
 client.shorten(
     dest_long_url,        # Required: The long URL to shorten
-    brand=None,           # Optional: Brand name (e.g., "mybrand"). Omit for brand-less links.
-    post_id=None,         # Optional: Custom post ID. If omitted, auto-generated as a 6-char random ID (e.g. "Xy3KpL").
-                          #           Must be alphanumeric only — no dashes.
+    brand=None,           # Optional: Brand/channel name (e.g. "isrotel"). Omit for brand-less links.
+    post_id=None,         # Optional: Custom short ID (e.g. "p001"). Auto-generated if omitted.
 )
 ```
+
+**Naming rules:**
+
+| Parameter | Allowed characters | Notes |
+|-----------|-------------------|-------|
+| `brand` | `a–z`, `A–Z`, `0–9`, `-` (dash) | e.g. `"my-brand"` |
+| `post_id` | `a–z`, `A–Z`, `0–9` only | No dashes. `"base"` is reserved and not allowed. |
 
 In Python, **required** parameters have no default value — passing them by name is optional
 but recommended for clarity. **Optional** parameters always have a default (here `=None`).
@@ -62,18 +71,28 @@ The `{project}` is always extracted automatically from your API key.
 **Returns:** `str` — the short URL.
 
 **Channel suffix tracking:**  
-You can append any `-suffix` to any short URL at any time — no declaration needed.
-The worker strips the suffix, redirects to the correct destination, and records per-suffix
-counts in the `clicks_per_suffix` field of that link.
+All suffix variants share the **same underlying link** (same KV key, same destination URL).
+You simply append `-<suffix>` to any short URL at any time — no registration needed.
+The worker detects and strips the suffix, redirects to the correct destination, and
+increments per-suffix click counts in the `clicks_per_suffix` field of that link.
+
+For example, the link `Xy3KpL` created once can be distributed on multiple channels:
 
 ```
-https://domain.com/myproject/mybrand/Xy3KpL        → direct click
-https://domain.com/myproject/mybrand/Xy3KpL-fb     → Facebook
-https://domain.com/myproject/mybrand/Xy3KpL-tg     → Telegram
-https://domain.com/myproject/mybrand/Xy3KpL-newsletter → email newsletter
+https://domain.com/myproject/mybrand/Xy3KpL           → no suffix   → counted as "base"
+https://domain.com/myproject/mybrand/Xy3KpL-fb        → suffix "fb" → Facebook traffic
+https://domain.com/myproject/mybrand/Xy3KpL-tg        → suffix "tg" → Telegram traffic
+https://domain.com/myproject/mybrand/Xy3KpL-email     → suffix "email" → email newsletter
 ```
 
-Suffix rules: 2–10 alphanumeric characters, no dashes.
+All four URLs above redirect to the **same destination** and all clicks accumulate under
+the same link entry. The resulting `clicks_per_suffix` might look like:
+
+```python
+{"base": 5, "fb": 12, "tg": 3, "email": 8}
+```
+
+Suffix rules: 1–10 alphanumeric characters (`a–z`, `A–Z`, `0–9`), no dashes.
 
 **How post IDs are auto-generated:**
 When `post_id` is not provided, a 6-character random base62 string is generated
@@ -103,7 +122,7 @@ print(short_url)
 # https://domain.com/myproject/mybrand/Xy3KpL
 ```
 
-### Example 3 — Custom post ID
+### Example 3 — With brand and custom post ID
 
 ```python
 short_url = client.shorten(
@@ -115,18 +134,60 @@ print(short_url)
 # https://domain.com/myproject/mybrand/p381
 ```
 
+### Example 4 — Custom post ID, no brand
+
+```python
+short_url = client.shorten(
+    dest_long_url="https://example.com/long-url",
+    post_id="p001"
+)
+print(short_url)
+# https://domain.com/myproject/p001
+```
+
 ---
 
 ## Other Methods
 
 ### `client.list(limit=100, cursor=None)`
 
-List all links for your project.
+List all links for your project. Returns up to `limit` links per call (max 1000).
+
+**Response fields per link:**
+
+| Field | Always present | Description |
+|---|---|---|
+| `id` | ✅ | Full KV key, e.g. `myproject:mybrand:p381` |
+| `project` | ✅ | Your project name (from API key) |
+| `post_id` | ✅ | The short ID part, e.g. `p381` |
+| `brand` | only if brand was used | Brand name |
+| `url` | ✅ | The original long URL |
+| `clicks` | ✅ | Total click count (0 if never clicked) |
+| `created_at` | ✅ | ISO timestamp of creation |
+| `last_click` | only after first click | ISO timestamp of last click |
+| `clicks_per_suffix` | only after first click | Dict of per-suffix click counts, e.g. `{"base": 3, "fb": 2}`. `base` = clicks with no suffix. |
+
+**Basic usage:**
 
 ```python
 result = client.list()
 for link in result["links"]:
-    print(f"{link['id']}: {link['url']}")
+    print(link["id"], link["clicks"])
+```
+
+**Pagination with cursor** (when you have more than `limit` links):
+
+```python
+all_links = []
+result = client.list(limit=50)
+all_links.extend(result["links"])
+
+while not result["list_complete"]:
+    result = client.list(limit=50, cursor=result["cursor"])
+    all_links.extend(result["links"])
+
+# all_links now contains every link in your project
+print(f"Total: {len(all_links)}")
 ```
 
 ### `client.delete(link_id)`
