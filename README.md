@@ -56,6 +56,7 @@ client.shorten(
 | `dest_long_url` | ✅ | Any valid `http`/`https` URL | — | No private IPs or localhost |
 | `brand` | ❌ | `a–z`, `A–Z`, `0–9`, `-` | `/{project}/{brand}/{post_id}` | Omit for brand-less links |
 | `post_id` | ❌ | `a–z`, `A–Z`, `0–9` | `/{project}/{post_id}` or `/{project}/{brand}/{post_id}` | No dashes. `"base"` is reserved. Auto-generated (6 chars) if omitted. |
+| `metadata` | ❌ | str, list, or dict | — | Optional context to store with the link (e.g. hotel name, area, dates). Returned by `get_link()` and `list()`. |
 
 The `{project}` is always extracted automatically from your API key.
 
@@ -157,6 +158,7 @@ List all links for your project. Returns up to `limit` links per call (max 1000)
 | `created_at` | ✅ | ISO timestamp of creation |
 | `last_click` | only after first click | ISO timestamp of last click |
 | `clicks_per_suffix` | only after first click | Dict of per-suffix click counts, e.g. `{"base": 3, "fb": 2}`. `base` = clicks with no suffix. |
+| `metadata` | only if set | Any value passed at creation or via `edit_link_metadata()` (str, list, or dict). |
 
 **Example response:**
 
@@ -226,10 +228,33 @@ info = client.get_link("myproject:mybrand:p381")
     "created_at":        "2026-04-01T10:00:00.000Z",
     "last_click":        "2026-04-04T18:05:10.888Z",
     "clicks_per_suffix": {"base": 15, "fb": 8, "tg": 5},
+    "metadata":          {"hotel": "Dan Tel Aviv", "area": "Tel Aviv", "dates": "15-17 Apr"},
 }
 ```
 
-(`last_click` and `clicks_per_suffix` only appear after the first click.)
+(`last_click`, `clicks_per_suffix`, and `metadata` only appear if set.)
+
+---
+
+### `client.edit_link_metadata(link_id, metadata)`
+
+Update the metadata of an existing link without affecting any other fields. Pass `None` to clear it.
+
+```python
+# Set or replace metadata
+client.edit_link_metadata(
+    "myproject:mybrand:p381",
+    {"hotel": "Dan Tel Aviv", "area": "Tel Aviv", "dates": "15-17 Apr"}
+)
+
+# Update to a plain string
+client.edit_link_metadata("myproject:mybrand:p381", "Dan Tel Aviv promo")
+
+# Clear metadata
+client.edit_link_metadata("myproject:mybrand:p381", None)
+```
+
+**Returns:** `{"success": True, "id": "...", "metadata": ...}`
 
 ---
 

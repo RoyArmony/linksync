@@ -117,6 +117,7 @@ class Client:
         dest_long_url: str,
         brand: Optional[str] = None,
         post_id: Optional[str] = None,
+        metadata=None,
     ) -> str:
         """
         Create a short link. See README for full usage and examples.
@@ -126,6 +127,9 @@ class Client:
             brand: Brand name (e.g., 'mybrand'). Optional — omit for brand-less links.
             post_id: Custom post ID. Auto-generated (6-char base62) if omitted.
                      Must be alphanumeric only — no dashes.
+            metadata: Optional metadata to store with the link (str, list, or dict).
+                      Use this to attach context for later analysis
+                      (e.g. hotel name, area, dates).
 
         Returns:
             str — the short URL
@@ -144,6 +148,9 @@ class Client:
 
         if post_id:
             payload["post_id"] = post_id
+
+        if metadata is not None:
+            payload["metadata"] = metadata
 
         response = self._request('POST', '/api/shorten', json=payload)
         return response.get('short_url', '')
@@ -238,6 +245,28 @@ class Client:
         encoded_id = quote(link_id, safe='')
 
         response = self._request('GET', f'/api/links/{encoded_id}')
+        return response
+
+    def edit_link_metadata(self, link_id: str, metadata) -> Dict[str, any]:
+        """
+        Update the metadata of an existing link. Pass None to clear the metadata.
+
+        Args:
+            link_id: The full link ID, e.g. "myproject:mybrand:p381"
+            metadata: New metadata value (str, list, dict, or None to clear)
+
+        Returns:
+            Dict with {success, id, metadata}
+
+        Raises:
+            LinkNotFoundError: Link does not exist
+            AuthenticationError: Invalid API key
+            APIError: Other API errors
+        """
+        from urllib.parse import quote
+        encoded_id = quote(link_id, safe='')
+
+        response = self._request('PATCH', f'/api/links/{encoded_id}', json={'metadata': metadata})
         return response
     
     def __enter__(self):
